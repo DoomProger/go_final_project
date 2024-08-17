@@ -22,7 +22,7 @@ func checkAndCreateDB(dbPath string) error {
 	_, err := os.Stat(dbPath)
 	if os.IsNotExist(err) {
 		log.Println("Database file does not exist. Creating new database.")
-		db, err := sql.Open("sqlite3", dbPath)
+		db, err := sql.Open(DBDriver, dbPath)
 		if err != nil {
 			return err
 		}
@@ -56,7 +56,6 @@ func checkAndCreateDB(dbPath string) error {
 
 func getRepeat(repeat string) (repeatDate, error) {
 	if len(repeat) == 0 {
-		// fmt.Printf("Unsupported value %v", repeat)
 		return repeatDate{}, fmt.Errorf("input value is empty [%s]", repeat)
 	}
 
@@ -88,7 +87,7 @@ func getRepeat(repeat string) (repeatDate, error) {
 }
 
 func NextDate(now time.Time, date string, repeat string) (string, error) {
-	d, err := time.Parse("20060102", date)
+	d, err := time.Parse(dateFormat, date)
 	if err != nil {
 		return "", fmt.Errorf("failed parse date %w", err)
 	}
@@ -104,7 +103,7 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 		nextDate = nextDate.AddDate(rdate.ryears, rdate.rmonths, rdate.rdays)
 	}
 
-	resNextDate := nextDate.Format("20060102")
+	resNextDate := nextDate.Format(dateFormat)
 	// fmt.Println(resNextDate)
 	return resNextDate, nil
 }
