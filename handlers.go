@@ -6,8 +6,23 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 )
+
+type Response struct {
+	ID    string `json:"id,omitempty"`
+	Error string `json:"error,omitempty"`
+}
+
+func writeJSONError(w http.ResponseWriter, code int, message string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	errorResponse := Response{
+		Error: message,
+	}
+	json.NewEncoder(w).Encode(errorResponse)
+}
 
 func nextDateHandler(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
@@ -33,58 +48,51 @@ func nextDateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// fmt.Println(nextDate)
-	// log.Println(nextDate)
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(nextDate))
 
 }
 
-// func Index(db *sql.DB) http.HandlerFunc {
-// 	return func(w http.ResponseWriter, r *http.Request) {
-// 		// do stuff with db here
-// 		fmt.Fprintf(w, "Hello world!")
-// 	}
-// }
-
 func postTask(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var task Task
-		// var buf bytes.Buffer
 
 		if err := json.NewDecoder(r.Body).Decode(&task); err != nil {
-			http.Error(w, "Invalid request payload", http.StatusBadRequest)
+			log.Println("Invalid request payload")
+			json.NewEncoder(w).Encode(Response{Error: "Invalid request payload"})
 			return
 		}
 
 		if task.Title == "" {
-			http.Error(w, "'title' is a required field", http.StatusBadRequest)
+			log.Println("'title' is a required field")
+			writeJSONError(w, http.StatusBadRequest, "'title' is a required field")
 			return
 		}
 
 		now := time.Now()
-		nowStr := now.Format(dateFormat)
 
 		if task.Date == "" {
-			task.Date = nowStr
-		} else {
-			taskDate, err := time.Parse(dateFormat, task.Date)
-			if err != nil {
-				http.Error(w, "Invalid 'date' format", http.StatusBadRequest)
-				return
-			}
+			task.Date = now.Format(dateFormat)
+		}
 
-			if taskDate.Before(now) {
-				if task.Repeat == "" {
-					task.Date = nowStr
-				} else {
-					nextDate, err := NextDate(now, taskDate.Format(dateFormat), task.Repeat)
-					if err != nil {
-						http.Error(w, err.Error(), http.StatusBadRequest)
-						return
-					}
-					task.Date = nextDate
+		taskDate, err := time.Parse(dateFormat, task.Date)
+		if err != nil {
+			writeJSONError(w, http.StatusBadRequest, "Invalid 'date' format")
+			return
+		}
+
+		log.Printf("Repeat: %s; Date: %s; Title: %s\n---\n", task.Repeat, task.Date, task.Title)
+
+		if taskDate.Before(now) {
+			if task.Repeat == "" {
+				task.Date = now.Format(dateFormat)
+			} else {
+				nextDate, err := NextDate(now, taskDate.Format(dateFormat), task.Repeat)
+				if err != nil {
+					writeJSONError(w, http.StatusBadRequest, fmt.Sprintf("Can not get next date; error %v", err))
+					return
 				}
+				task.Date = nextDate
 			}
 		}
 
@@ -95,9 +103,11 @@ func postTask(db *sql.DB) http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		log.Println("Task was added", res)
+
+		// log.Println("Task was added", res)
 
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusCreated)
+		json.NewEncoder(w).Encode(Response{ID: strconv.Itoa(res)})
 	}
 }

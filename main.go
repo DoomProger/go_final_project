@@ -22,7 +22,7 @@ func main() {
 		log.Fatal(err)
 	}
 	// dbFile := filepath.Join(filepath.Dir(appPath), tests.DBFile)
-	dbFile := filepath.Join(appPath, tests.DBFile)
+	dbFile := filepath.Join(appPath, DBFile)
 
 	err = checkAndCreateDB(dbFile)
 	if err != nil {
