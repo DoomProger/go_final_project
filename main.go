@@ -9,16 +9,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/go-chi/chi"
 	_ "github.com/mattn/go-sqlite3"
 )
-
-const (
-	DBDriver = "sqlite"
-)
-
-type SchedulerStore struct {
-	db *sql.DB
-}
 
 func main() {
 
@@ -36,12 +29,24 @@ func main() {
 		log.Fatalf("Error while setting up database: %v", err)
 	}
 
+	//---
+	db, err := sql.Open(DBDriver, dbFile)
+	if err != nil {
+		log.Fatalf("Error while opening database: %v", err)
+	}
+	defer db.Close()
+	//---
+
 	port := tests.GetPort("TODO_PORT")
 
-	http.Handle("/", http.FileServer(http.Dir("./web")))
-	http.HandleFunc("/api/nextdate", nextDateHandler)
+	r := chi.NewRouter()
 
-	err = http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", port), nil)
+	http.Handle("/", http.FileServer(http.Dir("./web")))
+	// http.HandleFunc("/api/nextdate", nextDateHandler)
+	r.Get("/api/nextdate", nextDateHandler)
+	r.Post("/api/task", postTask(db))
+
+	err = http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", port), r)
 	if err != nil {
 		log.Fatal(err)
 	}
