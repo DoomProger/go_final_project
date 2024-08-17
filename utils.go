@@ -13,9 +13,9 @@ import (
 )
 
 type repeatDate struct {
-	ryears  int
-	rmonths int
-	rdays   int
+	years  int
+	months int
+	days   int
 }
 
 func checkAndCreateDB(dbPath string) error {
@@ -62,17 +62,18 @@ func getRepeat(repeat string) (repeatDate, error) {
 	repeatSettings := strings.Split(repeat, " ")
 	if repeatSettings[0] == "y" && len(repeatSettings) == 1 {
 		return repeatDate{
-			ryears: 1,
+			years: 1,
 		}, nil
 	}
 
 	if repeatSettings[0] == "d" && len(repeatSettings) == 2 {
 		v, err := strconv.Atoi(repeatSettings[1])
-		if v == 0 {
-			return repeatDate{}, fmt.Errorf("the number of repeating days must be greater than 0")
-		}
 		if err != nil {
 			return repeatDate{}, fmt.Errorf("the number of repeating days must be define")
+		}
+
+		if v == 0 {
+			return repeatDate{}, fmt.Errorf("the number of repeating days must be greater than 0")
 		}
 
 		if v > 400 {
@@ -80,14 +81,14 @@ func getRepeat(repeat string) (repeatDate, error) {
 		}
 
 		return repeatDate{
-			rdays: v,
+			days: v,
 		}, nil
 	}
 	return repeatDate{}, fmt.Errorf("can't parse repeat values, got %v", repeatSettings)
 }
 
 func NextDate(now time.Time, date string, repeat string) (string, error) {
-	d, err := time.Parse(dateFormat, date)
+	nextDate, err := time.Parse(dateFormat, date)
 	if err != nil {
 		return "", fmt.Errorf("failed parse date %w", err)
 	}
@@ -97,13 +98,15 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 		return "", err
 	}
 
-	nextDate := d.AddDate(rdate.ryears, rdate.rmonths, rdate.rdays)
+	if rdate.days == 1 {
+		resNextDate := now.Format(dateFormat)
+		return resNextDate, nil
+	}
 
 	for nextDate.Before(now) {
-		nextDate = nextDate.AddDate(rdate.ryears, rdate.rmonths, rdate.rdays)
+		nextDate = nextDate.AddDate(rdate.years, rdate.months, rdate.days)
 	}
 
 	resNextDate := nextDate.Format(dateFormat)
-	// fmt.Println(resNextDate)
 	return resNextDate, nil
 }
