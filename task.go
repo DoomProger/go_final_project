@@ -8,10 +8,15 @@ import (
 )
 
 type Task struct {
+	ID      string `json:"id,omitempty"`
 	Date    string `json:"date"`
 	Title   string `json:"title"`
 	Comment string `json:"comment,omitempty"`
 	Repeat  string `json:"repeat"`
+}
+
+type TaskResponse struct {
+	Tasks []Task `json:"tasks"`
 }
 
 type SchedulerStore struct {
@@ -41,4 +46,34 @@ func (s SchedulerStore) Add(t Task) (int, error) {
 	}
 
 	return int(lastInserted), nil
+}
+
+func (s SchedulerStore) Get(t Task) (TaskResponse, error) {
+
+	var tasks TaskResponse
+
+	rows, err := s.db.Query(
+		"SELECT * FROM scheduler ORDER BY date LIMIT :limit", sql.Named("limit", limit50))
+	if err != nil {
+		return TaskResponse{}, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		task := Task{}
+
+		err := rows.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
+		if err != nil {
+			return TaskResponse{}, err
+		}
+
+		tasks.Tasks = append(tasks.Tasks, task)
+	}
+
+	if len(tasks.Tasks) == 0 {
+		tasks.Tasks = []Task{}
+		return tasks, nil
+	}
+
+	return tasks, nil
 }

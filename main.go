@@ -41,11 +41,17 @@ func main() {
 
 	r := chi.NewRouter()
 
-	http.Handle("/", http.FileServer(http.Dir("./web")))
-	// http.HandleFunc("/api/nextdate", nextDateHandler)
+	// http.Handle("/", http.FileServer(http.Dir("./web")))
+	// http.HandleFunc("/api/tasks", getTasks(db))
+
+	r.Handle("/", http.FileServer(http.Dir("./web")))
 	r.Get("/api/nextdate", nextDateHandler)
+	r.Get("/api/tasks", getTasks(db))
 	r.Post("/api/task", postTask(db))
 
+	log.Println("Run on port:", port)
+
+	// err = http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", port), nil)
 	err = http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", port), r)
 	if err != nil {
 		log.Fatal(err)
