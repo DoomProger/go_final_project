@@ -3,7 +3,7 @@ module gofinalproject
 go 1.21.8
 
 require (
-	github.com/go-chi/chi v1.5.5
+	github.com/go-chi/chi/v5 v5.1.0
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/stretchr/testify v1.9.0

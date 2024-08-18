@@ -20,7 +20,7 @@ var Token = ``
 //TODO:
 // function to file utils.go or pkg utils/utils.go
 
-// GetPort retrieves the port number from the environment variable or uses the default value 7450.
+// GetPort retrieves the port number from the environment variable or uses the default value 7540.
 func GetPort(envKey string) int {
 	if val, ok := os.LookupEnv(envKey); ok {
 		v, err := strconv.Atoi(val)
