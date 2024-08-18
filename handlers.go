@@ -81,8 +81,6 @@ func postTask(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		log.Printf("Repeat: %s; Date: %s; Title: %s\n---\n", task.Repeat, task.Date, task.Title)
-
 		if taskDate.Before(now) {
 			if task.Repeat == "" {
 				task.Date = now.Format(dateFormat)
@@ -104,10 +102,27 @@ func postTask(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// log.Println("Task was added", res)
-
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(Response{ID: strconv.Itoa(res)})
+	}
+}
+
+func getTasks(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var task Task
+
+		//TODO: search option
+
+		store := NewSchedulerStore(db)
+		res, err := store.Get(task)
+		if err != nil {
+			writeJSONError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.WriteHeader(http.StatusCreated)
+		json.NewEncoder(w).Encode(res)
 	}
 }
