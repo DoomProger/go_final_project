@@ -27,7 +27,7 @@ func NewSchedulerStore(db *sql.DB) SchedulerStore {
 	return SchedulerStore{db: db}
 }
 
-func (s SchedulerStore) Add(t Task) (int, error) {
+func (s SchedulerStore) AddTask(t Task) (int, error) {
 	res, err := s.db.Exec("INSERT INTO scheduler (date, title, comment, repeat) VALUES (:date, :title, :comment, :repeat)",
 		sql.Named("date", t.Date),
 		sql.Named("title", t.Title),
@@ -48,7 +48,51 @@ func (s SchedulerStore) Add(t Task) (int, error) {
 	return int(lastInserted), nil
 }
 
-func (s SchedulerStore) Get(t Task) (TaskResponse, error) {
+func (s SchedulerStore) UpdateTask(t Task) error {
+
+	_, err := s.db.Exec(
+		"UPDATE scheduler SET date = :date, title = :title, comment = :comment, repeat = :repeat WHERE id = :id",
+		sql.Named("date", t.Date),
+		sql.Named("title", t.Title),
+		sql.Named("comment", t.Comment),
+		sql.Named("repeat", t.Repeat),
+		sql.Named("id", t.ID))
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s SchedulerStore) DeleteTask(id string) error {
+	_, err := s.db.Exec(
+		"DELETE FROM scheduler WHERE id = :id",
+		sql.Named("id", id))
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s SchedulerStore) GetTask(id string) (Task, error) {
+
+	var task Task
+
+	row := s.db.QueryRow(
+		"SELECT * FROM scheduler WHERE id = :id", sql.Named("id", id))
+
+	err := row.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
+	if err != nil {
+		return Task{}, err
+	}
+
+	return task, nil
+}
+
+func (s SchedulerStore) GetTasks(t Task) (TaskResponse, error) {
 
 	var tasks TaskResponse
 

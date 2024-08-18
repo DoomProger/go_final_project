@@ -107,6 +107,12 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 		nextDate = nextDate.AddDate(rdate.years, rdate.months, rdate.days)
 	}
 
+	if nextDate.Format(dateFormat) == now.Format(dateFormat) && rdate.days >= 2 {
+		nextDate = nextDate.AddDate(rdate.years, rdate.months, rdate.days)
+	} else {
+		nextDate = nextDate.AddDate(rdate.years, rdate.months, rdate.days)
+	}
+
 	resNextDate := nextDate.Format(dateFormat)
 	return resNextDate, nil
 }

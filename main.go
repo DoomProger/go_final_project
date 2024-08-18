@@ -9,7 +9,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/go-chi/chi"
+	// "github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -43,11 +44,23 @@ func main() {
 
 	// http.Handle("/", http.FileServer(http.Dir("./web")))
 	// http.HandleFunc("/api/tasks", getTasks(db))
+	// r.Handle("/", http.FileServer(http.Dir("./web")))
+	r.Get("/",
+		func(w http.ResponseWriter, r *http.Request) {
+			http.ServeFile(w, r, "./web/index.html")
+		})
+	fileServer := http.FileServer(http.Dir("./web"))
+	r.Handle("/web/*", http.StripPrefix("/web", fileServer))
 
-	r.Handle("/", http.FileServer(http.Dir("./web")))
 	r.Get("/api/nextdate", nextDateHandler)
+
+	r.Get("/api/task", getTask(db))
 	r.Get("/api/tasks", getTasks(db))
+
+	r.Post("/api/task/done", postTaskDone(db))
 	r.Post("/api/task", postTask(db))
+
+	r.Put("/api/task", UpdateTask(db))
 
 	log.Println("Run on port:", port)
 

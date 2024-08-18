@@ -1,0 +1,52 @@
+version: '3'
+
+tasks:
+  run:
+    desc: run project
+    cmds:
+      - go run .
+  
+  test-1-App:
+    desc: test app
+    cmds:
+      - go test -run ^TestApp$ ./tests
+
+  test-3-nextDate:
+    desc: run TestNextDate
+    cmds:
+      - go test -run ^TestNextDate$ ./tests
+  
+  test-4-addTask:
+    desc: run TestAddTask
+    cmds:
+      - go test -run ^TestAddTask$ ./tests
+       
+  test-5-Tasks:
+    desc: run TestTasks
+    cmds:
+      - go test -run ^TestTasks$ ./tests
+
+  test-6-editTasks:
+    desc: run TestEditTask
+    # deps:
+    #   - test-1-App
+    cmds:
+      - go test -run ^TestEditTask$ ./tests
+  
+  test-7-done:
+    desc: run TestDone
+    cmds:
+      - go test -run ^TestDone$ ./tests
+  
+  test-all:
+    desc: run all tests
+    cmds:
+      - go test -run ./test
+
+  clean-test-cache:
+    cmds:
+      - go clean -testcache
+  
+  rm-db:
+    cmds:
+      - rm -f scheduler.db
