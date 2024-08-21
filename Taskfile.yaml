@@ -41,7 +41,7 @@ tasks:
   test-all:
     desc: run all tests
     cmds:
-      - go test -run ./test
+      - go test ./tests
 
   clean-test-cache:
     cmds:
