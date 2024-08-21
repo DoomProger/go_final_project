@@ -162,7 +162,35 @@ func postTaskDone(db *sql.DB) http.HandlerFunc {
 		}
 
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusCreated)
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{}`))
+	}
+}
+
+func deleteTask(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		query := r.URL.Query()
+		id := query.Get("id")
+		if id == "" {
+			writeJSONError(w, http.StatusNotFound, "Identifier not specified")
+			return
+		}
+
+		store := NewSchedulerStore(db)
+		task, err := store.GetTask(id)
+		if err != nil {
+			writeJSONError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		err = store.DeleteTask(task.ID)
+		if err != nil {
+			writeJSONError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{}`))
 	}
 }

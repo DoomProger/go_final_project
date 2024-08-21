@@ -42,15 +42,22 @@ func main() {
 
 	r := chi.NewRouter()
 
+	// r.Use(middleware.Logger)
+
 	// http.Handle("/", http.FileServer(http.Dir("./web")))
 	// http.HandleFunc("/api/tasks", getTasks(db))
 	// r.Handle("/", http.FileServer(http.Dir("./web")))
-	r.Get("/",
-		func(w http.ResponseWriter, r *http.Request) {
-			http.ServeFile(w, r, "./web/index.html")
-		})
+
+	// r.Get("/",
+	// func(w http.ResponseWriter, r *http.Request) {
+	// http.ServeFile(w, r, "./web/index.html")
+	// })
+
 	fileServer := http.FileServer(http.Dir("./web"))
-	r.Handle("/web/*", http.StripPrefix("/web", fileServer))
+	r.Handle("/web/*", http.StripPrefix("/web/", fileServer))
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		fileServer.ServeHTTP(w, r)
+	})
 
 	r.Get("/api/nextdate", nextDateHandler)
 
@@ -62,9 +69,12 @@ func main() {
 
 	r.Put("/api/task", UpdateTask(db))
 
+	r.Delete("/api/task", deleteTask(db))
+
 	log.Println("Run on port:", port)
 
 	// err = http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", port), nil)
+
 	err = http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", port), r)
 	if err != nil {
 		log.Fatal(err)
