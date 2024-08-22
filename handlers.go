@@ -36,13 +36,7 @@ func nextDateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	date, err := time.Parse("20060102", dateStr)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid 'date' format: %v", err), http.StatusBadRequest)
-		return
-	}
-
-	nextDate, err := NextDate(now, date.Format("20060102"), repeat)
+	nextDate, err := NextDate(now, dateStr, repeat)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

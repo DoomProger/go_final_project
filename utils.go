@@ -60,6 +60,7 @@ func getRepeat(repeat string) (repeatDate, error) {
 	}
 
 	repeatSettings := strings.Split(repeat, " ")
+
 	if repeatSettings[0] == "y" && len(repeatSettings) == 1 {
 		return repeatDate{
 			years: 1,
@@ -72,12 +73,8 @@ func getRepeat(repeat string) (repeatDate, error) {
 			return repeatDate{}, fmt.Errorf("the number of repeating days must be define")
 		}
 
-		if v == 0 {
-			return repeatDate{}, fmt.Errorf("the number of repeating days must be greater than 0")
-		}
-
-		if v > 400 {
-			return repeatDate{}, fmt.Errorf("maximum number of repeating days is 400 but got %d", v)
+		if v == 0 || v > 400 {
+			return repeatDate{}, fmt.Errorf("the number of repeating days must be between 0 and 400, but go [%d]", v)
 		}
 
 		return repeatDate{
@@ -88,7 +85,7 @@ func getRepeat(repeat string) (repeatDate, error) {
 }
 
 func NextDate(now time.Time, date string, repeat string) (string, error) {
-	nextDate, err := time.Parse(dateFormat, date)
+	startDate, err := time.Parse(dateFormat, date)
 	if err != nil {
 		return "", fmt.Errorf("failed parse date %w", err)
 	}
@@ -98,21 +95,25 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 		return "", err
 	}
 
-	if rdate.days == 1 {
-		resNextDate := now.Format(dateFormat)
-		return resNextDate, nil
+	if !startDate.Before(now) && rdate.years == 1 {
+		nextDate := startDate.AddDate(rdate.years, rdate.months, rdate.days)
+		return nextDate.Format(dateFormat), nil
 	}
 
-	for nextDate.Before(now) {
-		nextDate = nextDate.AddDate(rdate.years, rdate.months, rdate.days)
+	if !startDate.Before(now) && rdate.days == 1 {
+		nextDate := startDate.AddDate(rdate.years, rdate.months, rdate.days)
+		return nextDate.Format(dateFormat), nil
 	}
 
-	if nextDate.Format(dateFormat) == now.Format(dateFormat) && rdate.days >= 2 {
-		nextDate = nextDate.AddDate(rdate.years, rdate.months, rdate.days)
-	} else {
-		nextDate = nextDate.AddDate(rdate.years, rdate.months, rdate.days)
+	if !startDate.Before(now) && rdate.days > 1 {
+		nextDate := startDate.AddDate(rdate.years, rdate.months, rdate.days)
+		return nextDate.Format(dateFormat), nil
 	}
 
-	resNextDate := nextDate.Format(dateFormat)
-	return resNextDate, nil
+	for startDate.Before(now) {
+		startDate = startDate.AddDate(rdate.years, rdate.months, rdate.days)
+	}
+
+	nextDate := startDate.Format(dateFormat)
+	return nextDate, nil
 }
