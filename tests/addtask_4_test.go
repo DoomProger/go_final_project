@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
+	"io" //del
 	"net/http"
 	"net/http/cookiejar"
 	"strconv"

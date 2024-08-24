@@ -31,8 +31,8 @@ func checkAndCreateDB(dbPath string) error {
 		query := `
         CREATE TABLE scheduler (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			date VARCHAR(8) DEFAULT "", -- handle YYYYMMDD format
-			title TEXT DEFAULT "",
+			date VARCHAR(8) NOT NULL, -- handle YYYYMMDD format
+			title TEXT NOT NULL,
 			comment TEXT DEFAULT "",
 			repeat VARCHAR(128) DEFAULT ""
 		);
@@ -73,8 +73,8 @@ func getRepeat(repeat string) (repeatDate, error) {
 			return repeatDate{}, fmt.Errorf("the number of repeating days must be define")
 		}
 
-		if v == 0 || v > 400 {
-			return repeatDate{}, fmt.Errorf("the number of repeating days must be between 0 and 400, but go [%d]", v)
+		if v < 1 || v > 400 {
+			return repeatDate{}, fmt.Errorf("the number of repeating days must be between 1 and 400, but go [%d]", v)
 		}
 
 		return repeatDate{
@@ -84,7 +84,13 @@ func getRepeat(repeat string) (repeatDate, error) {
 	return repeatDate{}, fmt.Errorf("can't parse repeat values, got %v", repeatSettings)
 }
 
+func normalizeTime(t time.Time) time.Time {
+	year, month, day := t.Date()
+	return time.Date(year, month, day, 0, 0, 0, 0, t.Location())
+}
+
 func NextDate(now time.Time, date string, repeat string) (string, error) {
+	now = normalizeTime(now)
 	startDate, err := time.Parse(dateFormat, date)
 	if err != nil {
 		return "", fmt.Errorf("failed parse date %w", err)
@@ -95,17 +101,7 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 		return "", err
 	}
 
-	if !startDate.Before(now) && rdate.years == 1 {
-		nextDate := startDate.AddDate(rdate.years, rdate.months, rdate.days)
-		return nextDate.Format(dateFormat), nil
-	}
-
-	if !startDate.Before(now) && rdate.days == 1 {
-		nextDate := startDate.AddDate(rdate.years, rdate.months, rdate.days)
-		return nextDate.Format(dateFormat), nil
-	}
-
-	if !startDate.Before(now) && rdate.days > 1 {
+	if !startDate.Before(now) {
 		nextDate := startDate.AddDate(rdate.years, rdate.months, rdate.days)
 		return nextDate.Format(dateFormat), nil
 	}

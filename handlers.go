@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -47,18 +46,16 @@ func nextDateHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func postTask(db *sql.DB) http.HandlerFunc {
+func addTaskHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var task Task
 
 		if err := json.NewDecoder(r.Body).Decode(&task); err != nil {
-			log.Println("Invalid request payload")
 			writeJSONError(w, http.StatusBadRequest, "Invalid request payload")
 			return
 		}
 
 		if task.Title == "" {
-			log.Println("'title' is a required field")
 			writeJSONError(w, http.StatusBadRequest, "'title' is a required field")
 			return
 		}
@@ -67,15 +64,13 @@ func postTask(db *sql.DB) http.HandlerFunc {
 
 		if task.Date == "" {
 			task.Date = now.Format(dateFormat)
-		}
+		} else {
+			taskDate, err := time.Parse(dateFormat, task.Date)
+			if err != nil {
+				writeJSONError(w, http.StatusBadRequest, "Invalid 'date' format")
+				return
+			}
 
-		taskDate, err := time.Parse(dateFormat, task.Date)
-		if err != nil {
-			writeJSONError(w, http.StatusBadRequest, "Invalid 'date' format")
-			return
-		}
-
-		if taskDate.Before(now) {
 			if task.Repeat == "" {
 				task.Date = now.Format(dateFormat)
 			} else {
@@ -96,17 +91,23 @@ func postTask(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
+		restask, err := store.GetTask(strconv.Itoa(res))
+		if err != nil {
+			writeJSONError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(Response{ID: strconv.Itoa(res)})
+		json.NewEncoder(w).Encode(Response{ID: restask.ID})
 	}
 }
 
-func postTaskDone(db *sql.DB) http.HandlerFunc {
+func doneTaskHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		query := r.URL.Query()
-		log.Println("postTaskDone query from http srv:", query)
+
 		id := query.Get("id")
 		if id == "" {
 			writeJSONError(w, http.StatusNotFound, "Identifier not specified")
@@ -119,7 +120,6 @@ func postTaskDone(db *sql.DB) http.HandlerFunc {
 			writeJSONError(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		log.Println("Got task", task)
 
 		if task.Repeat == "" {
 			err := store.DeleteTask(task.ID)
@@ -143,7 +143,6 @@ func postTaskDone(db *sql.DB) http.HandlerFunc {
 		now := time.Now()
 		nextDate, err := NextDate(now, taskDate.Format(dateFormat), task.Repeat)
 		if err != nil {
-			log.Printf("Can not get next date; error %v\n", err)
 			writeJSONError(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -161,7 +160,7 @@ func postTaskDone(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-func deleteTask(db *sql.DB) http.HandlerFunc {
+func deleteTaskHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		id := query.Get("id")
@@ -189,7 +188,7 @@ func deleteTask(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-func UpdateTask(db *sql.DB) http.HandlerFunc {
+func updateTaskHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var task Task
 
@@ -199,26 +198,22 @@ func UpdateTask(db *sql.DB) http.HandlerFunc {
 		}
 
 		if task.Title == "" {
-			log.Println("'title' is a required field")
 			writeJSONError(w, http.StatusBadRequest, "'title' is a required field")
 			return
 		}
 
 		if task.Date == "" {
-			log.Println("'date' is a required field")
 			writeJSONError(w, http.StatusBadRequest, "'date' is a required field")
 			return
 		}
 
 		if task.ID == "" {
-			log.Println("'id' is a required field")
 			writeJSONError(w, http.StatusBadRequest, "'title' is a required field")
 			return
 		}
 
 		id, err := strconv.ParseInt(task.ID, 10, 64)
 		if err != nil {
-			log.Println("'id' must be int")
 			writeJSONError(w, http.StatusBadRequest, "'id' must be int")
 			return
 		}
@@ -242,7 +237,6 @@ func UpdateTask(db *sql.DB) http.HandlerFunc {
 				nextDate, err := NextDate(now, taskDate.Format(dateFormat), task.Repeat)
 
 				if err != nil {
-					log.Printf("Can not get next date; error %v\n", err)
 					writeJSONError(w, http.StatusBadRequest, err.Error())
 					return
 				}
@@ -254,7 +248,6 @@ func UpdateTask(db *sql.DB) http.HandlerFunc {
 
 		_, err = store.GetTask(task.ID)
 		if err != nil {
-			log.Println("task not found", task.ID)
 			writeJSONError(w, http.StatusBadRequest, "task not found")
 			return
 		}
@@ -271,7 +264,7 @@ func UpdateTask(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-func getTask(db *sql.DB) http.HandlerFunc {
+func getTaskHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		id := query.Get("id")
@@ -294,7 +287,7 @@ func getTask(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-func getTasks(db *sql.DB) http.HandlerFunc {
+func getTasksHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var task Task
 
