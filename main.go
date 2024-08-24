@@ -29,13 +29,11 @@ func main() {
 		log.Fatalf("Error while setting up database: %v", err)
 	}
 
-	db, err := sql.Open(DBDriver, dbFile)
+	db, err := sql.Open(DBDriver, DBFile)
 	if err != nil {
 		log.Fatalf("Error while opening database: %v", err)
 	}
 	defer db.Close()
-
-	port := GetPort("TODO_PORT")
 
 	router := chi.NewRouter()
 
@@ -47,6 +45,7 @@ func main() {
 
 	router.Route("/api", func(r chi.Router) {
 		r.Get("/nextdate", nextDateHandler)
+		// r.Post("/sign", authHandler)
 
 		r.Route("/task", func(rt chi.Router) {
 			rt.Get("/", getTaskHandler(db))
@@ -62,9 +61,9 @@ func main() {
 		})
 	})
 
-	log.Println("Run on port:", port)
+	log.Println("Run on port:", Port)
 
-	err = http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", port), router)
+	err = http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", Port), router)
 	if err != nil {
 		log.Fatal(err)
 	}
