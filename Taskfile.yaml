@@ -50,3 +50,9 @@ tasks:
   rm-db:
     cmds:
       - rm -f scheduler.db
+  
+  curl-test-api:
+    vars:
+      TaskID: '{{.TaskID | default 1 }}'
+    cmds:
+      - curl -v "http://localhost:7540/api/task?id={{.TaskID}}"

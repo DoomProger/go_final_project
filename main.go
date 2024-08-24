@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"gofinalproject/tests"
 	"log"
 	"net/http"
 	"os"
@@ -30,52 +29,42 @@ func main() {
 		log.Fatalf("Error while setting up database: %v", err)
 	}
 
-	//---
 	db, err := sql.Open(DBDriver, dbFile)
 	if err != nil {
 		log.Fatalf("Error while opening database: %v", err)
 	}
 	defer db.Close()
-	//---
 
-	port := tests.GetPort("TODO_PORT")
+	port := GetPort("TODO_PORT")
 
-	r := chi.NewRouter()
-
-	// r.Use(middleware.Logger)
-
-	// http.Handle("/", http.FileServer(http.Dir("./web")))
-	// http.HandleFunc("/api/tasks", getTasks(db))
-	// r.Handle("/", http.FileServer(http.Dir("./web")))
-
-	// r.Get("/",
-	// func(w http.ResponseWriter, r *http.Request) {
-	// http.ServeFile(w, r, "./web/index.html")
-	// })
+	router := chi.NewRouter()
 
 	fileServer := http.FileServer(http.Dir("./web"))
-	r.Handle("/web/*", http.StripPrefix("/web/", fileServer))
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+	router.Handle("/*", http.StripPrefix("/", fileServer))
+	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		fileServer.ServeHTTP(w, r)
 	})
 
-	r.Get("/api/nextdate", nextDateHandler)
+	router.Route("/api", func(r chi.Router) {
+		r.Get("/nextdate", nextDateHandler)
 
-	r.Get("/api/task", getTask(db))
-	r.Get("/api/tasks", getTasks(db))
+		r.Route("/task", func(rt chi.Router) {
+			rt.Get("/", getTaskHandler(db))
+			rt.Post("/", addTaskHandler(db))
+			rt.Post("/done", doneTaskHandler(db))
+			rt.Delete("/", deleteTaskHandler(db))
+			rt.Put("/", updateTaskHandler(db))
 
-	r.Post("/api/task/done", postTaskDone(db))
-	r.Post("/api/task", postTask(db))
+		})
 
-	r.Put("/api/task", UpdateTask(db))
-
-	r.Delete("/api/task", deleteTask(db))
+		r.Route("/tasks", func(rts chi.Router) {
+			rts.Get("/", getTasksHandler(db))
+		})
+	})
 
 	log.Println("Run on port:", port)
 
-	// err = http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", port), nil)
-
-	err = http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", port), r)
+	err = http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", port), router)
 	if err != nil {
 		log.Fatal(err)
 	}

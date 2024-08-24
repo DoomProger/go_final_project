@@ -2,13 +2,13 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 type Task struct {
-	ID      string `json:"id,omitempty"`
+	ID string `json:"id"`
+	// ID      string `json:"id,omitempty"`
 	Date    string `json:"date"`
 	Title   string `json:"title"`
 	Comment string `json:"comment,omitempty"`
@@ -35,14 +35,12 @@ func (s SchedulerStore) AddTask(t Task) (int, error) {
 		sql.Named("repeat", t.Repeat))
 
 	if err != nil {
-		fmt.Println(err)
-		return 0, nil
+		return 0, err
 	}
 
 	lastInserted, err := res.LastInsertId()
 	if err != nil {
-		fmt.Println(err)
-		return 0, nil
+		return 0, err
 	}
 
 	return int(lastInserted), nil
