@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 
-	// "github.com/go-chi/chi"
 	"github.com/go-chi/chi/v5"
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -45,7 +44,11 @@ func main() {
 
 	router.Route("/api", func(r chi.Router) {
 		r.Get("/nextdate", nextDateHandler)
-		// r.Post("/sign", authHandler)
+		// r.Post("/signin", handleSignIn)
+
+		// r.Group(func(r chi.Router) {
+		// 	r.Use(jwtauth.Verifier(tokenAuth))
+		// 	r.Use(jwtauth.Authenticator(tokenAuth))
 
 		r.Route("/task", func(rt chi.Router) {
 			rt.Get("/", getTaskHandler(db))
@@ -59,6 +62,8 @@ func main() {
 		r.Route("/tasks", func(rts chi.Router) {
 			rts.Get("/", getTasksHandler(db))
 		})
+		// })
+
 	})
 
 	log.Println("Run on port:", Port)
