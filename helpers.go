@@ -24,5 +24,5 @@ func GetDBFile(envKey string) string {
 	if val, ok := os.LookupEnv(envKey); ok {
 		return val
 	}
-	return DBFile
+	return dbFile
 }

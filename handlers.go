@@ -62,7 +62,7 @@ func addTaskHandler(db *sql.DB) http.HandlerFunc {
 
 		now := time.Now()
 
-		if task.Date == "" {
+		if task.Date == "" || task.Date == now.Format(dateFormat) {
 			task.Date = now.Format(dateFormat)
 		} else {
 			taskDate, err := time.Parse(dateFormat, task.Date)
@@ -305,3 +305,7 @@ func getTasksHandler(db *sql.DB) http.HandlerFunc {
 		json.NewEncoder(w).Encode(res)
 	}
 }
+
+// func authHandler(w http.ResponseWriter, r *http.Request) http.HandlerFunc {
+
+// }
