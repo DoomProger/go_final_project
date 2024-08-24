@@ -29,7 +29,7 @@ func nextDateHandler(w http.ResponseWriter, r *http.Request) {
 	dateStr := query.Get("date")
 	repeat := query.Get("repeat")
 
-	now, err := time.Parse("20060102", nowStr)
+	now, err := time.Parse(dateFormat, nowStr)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Invalid 'now' date format: %v", err), http.StatusBadRequest)
 		return
@@ -291,7 +291,22 @@ func getTasksHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var task Task
 
-		//TODO: search option
+		query := r.URL.Query()
+		search := query.Get("search")
+
+		if search != "" {
+			store := NewSchedulerStore(db)
+			res, err := store.SearchTasks(search)
+			if err != nil {
+				// writeJSONError(w, http.StatusBadRequest, err.Error())
+				return
+			}
+
+			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(res)
+			return
+		}
 
 		store := NewSchedulerStore(db)
 		res, err := store.GetTasks(task)
@@ -305,7 +320,3 @@ func getTasksHandler(db *sql.DB) http.HandlerFunc {
 		json.NewEncoder(w).Encode(res)
 	}
 }
-
-// func authHandler(w http.ResponseWriter, r *http.Request) http.HandlerFunc {
-
-// }

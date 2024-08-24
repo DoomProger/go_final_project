@@ -56,3 +56,13 @@ tasks:
       TaskID: '{{.TaskID | default 1 }}'
     cmds:
       - curl -v "http://localhost:7540/api/task?id={{.TaskID}}"
+
+  build-docker:
+    desc: Build docker image
+    cmds:
+      - docker build -t taskscheduler:v1 .
+
+  run-docker:
+    desc: Run docker image on port 7540
+    cmds:
+      - docker run taskscheduler:v1 -p 7540:7540

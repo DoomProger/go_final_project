@@ -2,7 +2,9 @@ package main
 
 import (
 	"database/sql"
+	"time"
 
+	// "github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -88,6 +90,52 @@ func (s SchedulerStore) GetTask(id string) (Task, error) {
 	}
 
 	return task, nil
+}
+
+func (s SchedulerStore) SearchTasks(search string) (TaskResponse, error) {
+
+	var tasks TaskResponse
+	var rows *sql.Rows
+
+	parsedDate, err := time.Parse(dateFormatSearch, search)
+
+	if err == nil {
+		rows, err = s.db.Query(
+			"SELECT * FROM scheduler WHERE date = :date",
+			sql.Named("date", parsedDate.Format(dateFormat)))
+		if err != nil {
+			return TaskResponse{}, err
+		}
+		defer rows.Close()
+	} else {
+		rows, err = s.db.Query(
+			"SELECT * FROM scheduler WHERE title LIKE :search OR comment LIKE :search ORDER BY date LIMIT :limit",
+			sql.Named("search", "%"+search+"%"),
+			sql.Named("limit", limit50))
+		if err != nil {
+			return TaskResponse{}, err
+		}
+		defer rows.Close()
+
+	}
+
+	for rows.Next() {
+		task := Task{}
+
+		err := rows.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
+		if err != nil {
+			return TaskResponse{}, err
+		}
+
+		tasks.Tasks = append(tasks.Tasks, task)
+	}
+
+	if len(tasks.Tasks) == 0 {
+		tasks.Tasks = []Task{}
+		return tasks, nil
+	}
+
+	return tasks, nil
 }
 
 func (s SchedulerStore) GetTasks(t Task) (TaskResponse, error) {
