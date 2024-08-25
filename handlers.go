@@ -302,10 +302,6 @@ func getTasksHandler(db *sql.DB) http.HandlerFunc {
 			res, err := store.SearchTasks(search)
 			if err != nil {
 				writeJSONError(w, http.StatusBadRequest, err.Error())
-				// w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-				// w.WriteHeader(http.StatusOK)
-				// json.NewEncoder(w).Encode(res)
-				// return
 			}
 
 			w.Header().Set("Content-Type", "application/json; charset=UTF-8")

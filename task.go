@@ -4,12 +4,10 @@ import (
 	"database/sql"
 	"time"
 
-	// "github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 )
 
 type Task struct {
-	// ID string `json:"id"`
 	ID      string `json:"id,omitempty"`
 	Date    string `json:"date"`
 	Title   string `json:"title"`
