@@ -62,15 +62,18 @@ func addTaskHandler(db *sql.DB) http.HandlerFunc {
 
 		now := time.Now()
 
-		if task.Date == "" || task.Date == now.Format(dateFormat) {
+		if task.Date == "" {
 			task.Date = now.Format(dateFormat)
-		} else {
-			taskDate, err := time.Parse(dateFormat, task.Date)
-			if err != nil {
-				writeJSONError(w, http.StatusBadRequest, "Invalid 'date' format")
-				return
-			}
+		}
 
+		normNow := normalizeTime(now)
+		taskDate, err := time.Parse(dateFormat, task.Date)
+		if err != nil {
+			writeJSONError(w, http.StatusBadRequest, "Invalid 'date' format")
+			return
+		}
+
+		if taskDate.Before(normNow) {
 			if task.Repeat == "" {
 				task.Date = now.Format(dateFormat)
 			} else {
@@ -298,8 +301,11 @@ func getTasksHandler(db *sql.DB) http.HandlerFunc {
 			store := NewSchedulerStore(db)
 			res, err := store.SearchTasks(search)
 			if err != nil {
-				// writeJSONError(w, http.StatusBadRequest, err.Error())
-				return
+				writeJSONError(w, http.StatusBadRequest, err.Error())
+				// w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+				// w.WriteHeader(http.StatusOK)
+				// json.NewEncoder(w).Encode(res)
+				// return
 			}
 
 			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
