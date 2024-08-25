@@ -1,6 +1,7 @@
+# Build app
 FROM golang:1.22 AS builder
 
-ENV CGO_ENABLED=0 \
+ENV CGO_ENABLED=1 \
     GOOS=linux \
     GOARCH=amd64
 
@@ -12,21 +13,21 @@ RUN go mod download
 
 COPY *.go ./
 COPY *.db ./
+COPY ./web/ ./web/
 
 RUN go build -o /scheduler
 
 # Container with app
-FROM alpine:latest
+FROM ubuntu
 
 ENV TODO_PORT=7540 \
     TODO_DBFILE=scheduler.db
-
-RUN apk --no-cache add ca-certificates
 
 WORKDIR /app
 
 COPY --from=builder /scheduler .
 COPY --from=builder /app/*.db .
+COPY --from=builder /app/web ./web
 
 EXPOSE ${TODO_PORT}
 
