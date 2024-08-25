@@ -14,13 +14,11 @@ import (
 
 func main() {
 
-	// appPath, err := os.Executable()
 	appPath, err := os.Getwd()
 
 	if err != nil {
 		log.Fatal(err)
 	}
-	// dbFile := filepath.Join(filepath.Dir(appPath), tests.DBFile)
 	dbFile := filepath.Join(appPath, DBFile)
 
 	err = checkAndCreateDB(dbFile)
@@ -44,11 +42,6 @@ func main() {
 
 	router.Route("/api", func(r chi.Router) {
 		r.Get("/nextdate", nextDateHandler)
-		// r.Post("/signin", handleSignIn)
-
-		// r.Group(func(r chi.Router) {
-		// 	r.Use(jwtauth.Verifier(tokenAuth))
-		// 	r.Use(jwtauth.Authenticator(tokenAuth))
 
 		r.Route("/task", func(rt chi.Router) {
 			rt.Get("/", getTaskHandler(db))
@@ -62,7 +55,6 @@ func main() {
 		r.Route("/tasks", func(rts chi.Router) {
 			rts.Get("/", getTasksHandler(db))
 		})
-		// })
 
 	})
 
