@@ -8,7 +8,8 @@ tasks:
   run:
     desc: run project
     cmds:
-      - go run cmd/app/main.go
+      - TODO_PASSWORD=123 go run cmd/app/main.go
+      # - go run cmd/app/main.go
   
   test-1-App:
     desc: test app
@@ -89,3 +90,9 @@ tasks:
   docker:run-it:
     cmds:
       - docker run -it --rm -p 7540:7540 {{.DOCKER_IMAGE_NAME}}:v1 bash
+
+  auth:test:
+    cmds:
+      - |
+        curl -X POST http://localhost:7540/api/signin -d '{"password":"123"}' -H "Content-Type: application/json" -c cookies.txt
+        curl -X GET http://localhost:7540/api/tasks -b cookies.txt

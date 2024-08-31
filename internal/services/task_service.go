@@ -31,10 +31,10 @@ func (ts *TaskService) GetTaskById(id string) (*models.Task, error) {
 	return ts.repo.GetTask(id)
 }
 
-func (ts *TaskService) SearchTasks(search string) (*models.TaskResponse, error) {
+func (ts *TaskService) SearchTasks(search string) (*models.TasksResponse, error) {
 	return ts.repo.SearchTasks(search)
 }
 
-func (ts *TaskService) GetTasks() (*models.TaskResponse, error) {
+func (ts *TaskService) GetTasks() (*models.TasksResponse, error) {
 	return ts.repo.GetTasks()
 }

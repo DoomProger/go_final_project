@@ -78,9 +78,9 @@ func (s *SchedulerStore) GetTask(id string) (*models.Task, error) {
 	return &task, nil
 }
 
-func (s *SchedulerStore) SearchTasks(search string) (*models.TaskResponse, error) {
+func (s *SchedulerStore) SearchTasks(search string) (*models.TasksResponse, error) {
 
-	var tasks models.TaskResponse
+	var tasks models.TasksResponse
 	var rows *sql.Rows
 
 	parsedDate, err := time.Parse(config.DateFormatSearch, search)
@@ -90,7 +90,7 @@ func (s *SchedulerStore) SearchTasks(search string) (*models.TaskResponse, error
 			"SELECT * FROM scheduler WHERE date = :date",
 			sql.Named("date", parsedDate.Format(config.DateFormat)))
 		if err != nil {
-			return &models.TaskResponse{}, err
+			return &models.TasksResponse{}, err
 		}
 		defer rows.Close()
 	} else {
@@ -99,7 +99,7 @@ func (s *SchedulerStore) SearchTasks(search string) (*models.TaskResponse, error
 			sql.Named("search", "%"+search+"%"),
 			sql.Named("limit", config.Limit50))
 		if err != nil {
-			return &models.TaskResponse{}, err
+			return &models.TasksResponse{}, err
 		}
 		defer rows.Close()
 	}
@@ -109,7 +109,7 @@ func (s *SchedulerStore) SearchTasks(search string) (*models.TaskResponse, error
 
 		err := rows.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
 		if err != nil {
-			return &models.TaskResponse{}, err
+			return &models.TasksResponse{}, err
 		}
 
 		tasks.Tasks = append(tasks.Tasks, task)
@@ -123,14 +123,14 @@ func (s *SchedulerStore) SearchTasks(search string) (*models.TaskResponse, error
 	return &tasks, nil
 }
 
-func (s *SchedulerStore) GetTasks() (*models.TaskResponse, error) {
+func (s *SchedulerStore) GetTasks() (*models.TasksResponse, error) {
 
-	var tasks models.TaskResponse
+	var tasks models.TasksResponse
 
 	rows, err := s.DB.Query(
 		"SELECT * FROM scheduler ORDER BY date LIMIT :limit", sql.Named("limit", config.Limit50))
 	if err != nil {
-		return &models.TaskResponse{}, err
+		return &models.TasksResponse{}, err
 	}
 	defer rows.Close()
 
@@ -139,7 +139,7 @@ func (s *SchedulerStore) GetTasks() (*models.TaskResponse, error) {
 
 		err := rows.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
 		if err != nil {
-			return &models.TaskResponse{}, err
+			return &models.TasksResponse{}, err
 		}
 
 		tasks.Tasks = append(tasks.Tasks, task)

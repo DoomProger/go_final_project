@@ -8,6 +8,6 @@ type Task struct {
 	Repeat  string `json:"repeat"`
 }
 
-type TaskResponse struct {
+type TasksResponse struct {
 	Tasks []Task `json:"tasks"`
 }

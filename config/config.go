@@ -22,7 +22,7 @@ const (
 
 // Login settings
 const (
-	Token = ``
+	TokenTTL = 8
 )
 
 var DBFile = getDBFile("TODO_DBFILE")
