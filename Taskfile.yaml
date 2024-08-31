@@ -8,7 +8,7 @@ tasks:
   run:
     desc: run project
     cmds:
-      - go run .
+      - go run cmd/app/main.go
   
   test-1-App:
     desc: test app
