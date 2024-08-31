@@ -25,15 +25,6 @@ type Response struct {
 	Error string `json:"error,omitempty"`
 }
 
-func writeJSONError(w http.ResponseWriter, code int, message string) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	errorResponse := Response{
-		Error: message,
-	}
-	json.NewEncoder(w).Encode(errorResponse)
-}
-
 func (th *TaskHandler) AddTask(w http.ResponseWriter, r *http.Request) {
 	var task models.Task
 
@@ -203,18 +194,10 @@ func (th *TaskHandler) UpdateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if task.Title == "" {
-		writeJSONError(w, http.StatusBadRequest, "'title' is a required field")
-		return
-	}
+	ok, msg := isTaskFieldEmpty(*task)
 
-	if task.Date == "" {
-		writeJSONError(w, http.StatusBadRequest, "'date' is a required field")
-		return
-	}
-
-	if task.ID == "" {
-		writeJSONError(w, http.StatusBadRequest, "'title' is a required field")
+	if !ok {
+		writeJSONError(w, http.StatusBadRequest, msg)
 		return
 	}
 
@@ -293,18 +276,18 @@ func (th *TaskHandler) GetTasks(w http.ResponseWriter, r *http.Request) {
 	search := query.Get("search")
 
 	if search != "" {
-		res, err := th.taskService.SearchTasks(search)
+		tasks, err := th.taskService.SearchTasks(search)
 		if err != nil {
 			writeJSONError(w, http.StatusBadRequest, err.Error())
 		}
 
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(res)
+		json.NewEncoder(w).Encode(tasks)
 		return
 	}
 
-	res, err := th.taskService.GetTasks()
+	tasks, err := th.taskService.GetTasks()
 	if err != nil {
 		writeJSONError(w, http.StatusBadRequest, err.Error())
 		return
@@ -312,6 +295,6 @@ func (th *TaskHandler) GetTasks(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(res)
+	json.NewEncoder(w).Encode(tasks)
 
 }
