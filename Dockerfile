@@ -25,7 +25,8 @@ RUN go build -ldflags='-s -w -extldflags "-static"' -o /scheduler ./cmd/app/main
 FROM alpine
 
 ENV TODO_PORT=7540 \
-    TODO_DBFILE=scheduler.db
+    TODO_DBFILE=scheduler.db \
+    TODO_PASSWORD=123
 
 WORKDIR /app
 

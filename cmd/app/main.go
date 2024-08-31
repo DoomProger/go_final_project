@@ -51,12 +51,9 @@ func main() {
 	})
 
 	router.Post("/api/signin", handlers.SignIn)
-	// router.Post("/api/signin", taskHandler.SignIn)
 
 	router.Get("/api/nextdate", taskHandler.NextDate)
 
-	// router.Route("/api", func(r chi.Router) {
-	// router.With(taskHandler.AuthMiddleware).Group(func(r chi.Router) {
 	router.With(handlers.AuthMiddleware).Group(func(r chi.Router) {
 		r.Route("/api", func(r chi.Router) {
 
