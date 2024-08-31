@@ -1,5 +1,5 @@
 # Build app
-FROM golang:1.22 AS builder
+FROM golang:1.21.8-alpine3.19 AS builder
 
 ENV CGO_ENABLED=1 \
     GOOS=linux \
@@ -9,16 +9,20 @@ WORKDIR /app
 
 COPY go.mod go.sum ./
 
+RUN apk add --no-cache gcc musl-dev
 RUN go mod download
 
-COPY *.go ./
-COPY *.db ./
-COPY ./web/ ./web/
+COPY ./cmd/ ./cmd
+COPY ./config ./config
+COPY ./internal ./internal
+COPY ./pkg ./pkg
+COPY ./web/ ./web
+COPY ./*.db .
 
-RUN go build -o /scheduler
+RUN go build -ldflags='-s -w -extldflags "-static"' -o /scheduler ./cmd/app/main.go
 
 # Container with app
-FROM ubuntu
+FROM alpine
 
 ENV TODO_PORT=7540 \
     TODO_DBFILE=scheduler.db
