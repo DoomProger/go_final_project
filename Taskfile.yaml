@@ -62,12 +62,12 @@ tasks:
   docker:build:
     desc: Build docker image
     cmds:
-      - docker build -t {{.DOCKER_IMAGE_NAME}}:v1 .
+      - docker build --progress plain -t {{.DOCKER_IMAGE_NAME}}:v1 .
   
   docker:build-no-cache:
     desc: Build docker image
     cmds:
-      - docker build --no-cache -t {{.DOCKER_IMAGE_NAME}}:v1 .
+      - docker build --progress plain --no-cache -t {{.DOCKER_IMAGE_NAME}}:v1 .
 
   docker:run:
     desc: Run docker image (default port 7540)
