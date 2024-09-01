@@ -13,6 +13,7 @@ const (
 	DBDriver         = "sqlite3"
 	dbFile           = "scheduler.db"
 	port             = 7540
+	todoPassword     = "123"
 )
 
 // SQL limit query const
@@ -24,6 +25,8 @@ const (
 const (
 	TokenTTL = 8
 )
+
+var TodoPassword = getPassword("TODO_PASSWORD")
 
 var DBFile = getDBFile("TODO_DBFILE")
 var Port = getPort("TODO_PORT")
@@ -47,4 +50,11 @@ func getDBFile(envKey string) string {
 		return val
 	}
 	return dbFile
+}
+
+func getPassword(envKey string) string {
+	if val, ok := os.LookupEnv(envKey); ok {
+		return val
+	}
+	return todoPassword
 }

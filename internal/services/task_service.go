@@ -1,8 +1,11 @@
 package services
 
 import (
+	"gofinalproject/config"
+	"gofinalproject/internal/nextdate"
 	"gofinalproject/internal/repositories"
 	"gofinalproject/pkg/models"
+	"time"
 )
 
 type TaskService struct {
@@ -31,10 +34,39 @@ func (ts *TaskService) GetTaskById(id string) (*models.Task, error) {
 	return ts.repo.GetTask(id)
 }
 
-func (ts *TaskService) SearchTasks(search string) (*models.TasksResponse, error) {
-	return ts.repo.SearchTasks(search)
+func (ts *TaskService) TaskDone(id string) error {
+	task, err := ts.GetTaskById(id)
+	if err != nil {
+		return err
+	}
+
+	if task.Repeat == "" {
+		err := ts.DeleteTaskById(task.ID)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+	taskDate, err := time.Parse(config.DateFormat, task.Date)
+	if err != nil {
+		return err
+	}
+
+	now := time.Now()
+
+	nextDate, err := nextdate.NextDate(now, taskDate.Format(config.DateFormat), task.Repeat)
+
+	task.Date = nextDate
+
+	err = ts.ChangeTask(task)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (ts *TaskService) GetTasks() (*models.TasksResponse, error) {
-	return ts.repo.GetTasks()
+func (ts *TaskService) SearchTasks(search string) ([]*models.Task, error) {
+	return ts.repo.SearchTasks(search)
 }

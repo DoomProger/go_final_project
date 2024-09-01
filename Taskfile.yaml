@@ -45,6 +45,18 @@ tasks:
     desc: run all tests
     cmds:
       - go test ./tests
+  
+  test-auth-all:
+    desc: |
+      Get token and save it in tests/settings.go and run all tests.
+      Default password is '123'
+    cmds:
+      - |
+        TOKEN=$(curl -X POST http://localhost:7540/api/signin -d '{"password":"123"}' -H "Content-Type: application/json" | jq -r '.token')
+        echo $TOKEN
+        sed -i 's/var Token = \`.*`/var Token = \`$TOKEN\`/' tests/settings.go
+      - task test-all
+      - task clean-test-cache
 
   clean-test-cache:
     cmds:
