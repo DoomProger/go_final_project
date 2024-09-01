@@ -106,8 +106,6 @@ func (th *TaskHandler) NextDate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (th *TaskHandler) DoneTask(w http.ResponseWriter, r *http.Request) {
-	// var task models.Task
-
 	query := r.URL.Query()
 
 	id := query.Get("id")
@@ -116,40 +114,7 @@ func (th *TaskHandler) DoneTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	task, err := th.taskService.GetTaskById(id)
-	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	if task.Repeat == "" {
-		err := th.taskService.DeleteTaskById(task.ID)
-		if err != nil {
-			writeJSONError(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte(`{}`))
-		return
-	}
-
-	taskDate, err := time.Parse(config.DateFormat, task.Date)
-	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "Invalid 'date' format")
-		return
-	}
-
-	now := time.Now()
-	nextDate, err := nextdate.NextDate(now, taskDate.Format(config.DateFormat), task.Repeat)
-	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	task.Date = nextDate
-
-	err = th.taskService.ChangeTask(task)
+	err := th.taskService.TaskDone(id)
 	if err != nil {
 		writeJSONError(w, http.StatusBadRequest, err.Error())
 		return
@@ -158,7 +123,6 @@ func (th *TaskHandler) DoneTask(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte(`{}`))
-
 }
 
 func (th *TaskHandler) DeleteTask(w http.ResponseWriter, r *http.Request) {
@@ -275,26 +239,18 @@ func (th *TaskHandler) GetTasks(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	search := query.Get("search")
 
-	if search != "" {
-		tasks, err := th.taskService.SearchTasks(search)
-		if err != nil {
-			writeJSONError(w, http.StatusBadRequest, err.Error())
-		}
-
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(tasks)
-		return
-	}
-
-	tasks, err := th.taskService.GetTasks()
+	tasks, err := th.taskService.SearchTasks(search)
 	if err != nil {
 		writeJSONError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
+	response := map[string]interface{}{
+		"tasks": tasks,
+	}
+
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(tasks)
+	json.NewEncoder(w).Encode(response)
 
 }

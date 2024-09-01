@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"gofinalproject/config"
 	"log"
 	"net/http"
 	"os"
@@ -11,7 +12,9 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var todoPassword = os.Getenv("TODO_PASSWORD")
+var todoPassword = config.TodoPassword
+
+// var todoPassword = os.Getenv("TODO_PASSWORD")
 
 var jwtKey []byte
 

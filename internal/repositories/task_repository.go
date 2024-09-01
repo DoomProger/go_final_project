@@ -8,15 +8,15 @@ import (
 )
 
 type SchedulerStore struct {
-	DB *sql.DB
+	db *sql.DB
 }
 
 func NewSchedulerStore(db *sql.DB) *SchedulerStore {
-	return &SchedulerStore{DB: db}
+	return &SchedulerStore{db: db}
 }
 
 func (s *SchedulerStore) AddTask(t models.Task) (int, error) {
-	res, err := s.DB.Exec("INSERT INTO scheduler (date, title, comment, repeat) VALUES (:date, :title, :comment, :repeat)",
+	res, err := s.db.Exec("INSERT INTO scheduler (date, title, comment, repeat) VALUES (:date, :title, :comment, :repeat)",
 		sql.Named("date", t.Date),
 		sql.Named("title", t.Title),
 		sql.Named("comment", t.Comment),
@@ -36,7 +36,7 @@ func (s *SchedulerStore) AddTask(t models.Task) (int, error) {
 
 func (s *SchedulerStore) UpdateTask(t *models.Task) error {
 
-	_, err := s.DB.Exec(
+	_, err := s.db.Exec(
 		"UPDATE scheduler SET date = :date, title = :title, comment = :comment, repeat = :repeat WHERE id = :id",
 		sql.Named("date", t.Date),
 		sql.Named("title", t.Title),
@@ -52,7 +52,7 @@ func (s *SchedulerStore) UpdateTask(t *models.Task) error {
 }
 
 func (s *SchedulerStore) DeleteTask(id string) error {
-	_, err := s.DB.Exec(
+	_, err := s.db.Exec(
 		"DELETE FROM scheduler WHERE id = :id",
 		sql.Named("id", id))
 
@@ -67,7 +67,7 @@ func (s *SchedulerStore) GetTask(id string) (*models.Task, error) {
 
 	var task models.Task
 
-	row := s.DB.QueryRow(
+	row := s.db.QueryRow(
 		"SELECT * FROM scheduler WHERE id = :id", sql.Named("id", id))
 
 	err := row.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
@@ -78,30 +78,48 @@ func (s *SchedulerStore) GetTask(id string) (*models.Task, error) {
 	return &task, nil
 }
 
-func (s *SchedulerStore) SearchTasks(search string) (*models.TasksResponse, error) {
+func (s *SchedulerStore) SearchTasks(search string) ([]*models.Task, error) {
 
-	var tasks models.TasksResponse
+	var tasks []*models.Task
 	var rows *sql.Rows
+	var err error
 
-	parsedDate, err := time.Parse(config.DateFormatSearch, search)
+	if search != "" {
 
-	if err == nil {
-		rows, err = s.DB.Query(
-			"SELECT * FROM scheduler WHERE date = :date",
-			sql.Named("date", parsedDate.Format(config.DateFormat)))
-		if err != nil {
-			return &models.TasksResponse{}, err
+		parsedDate, err := time.Parse(config.DateFormatSearch, search)
+
+		if err == nil {
+
+			rows, err = s.db.Query(
+				"SELECT * FROM scheduler WHERE date = :date",
+				sql.Named("date", parsedDate.Format(config.DateFormat)))
+			if err != nil {
+				return make([]*models.Task, 0), err
+			}
+			defer rows.Close()
+
+		} else {
+
+			rows, err = s.db.Query(
+				"SELECT * FROM scheduler WHERE title LIKE :search OR comment LIKE :search ORDER BY date LIMIT :limit",
+				sql.Named("search", "%"+search+"%"),
+				sql.Named("limit", config.Limit50))
+			if err != nil {
+				return make([]*models.Task, 0), err
+			}
+			defer rows.Close()
 		}
-		defer rows.Close()
+
 	} else {
-		rows, err = s.DB.Query(
-			"SELECT * FROM scheduler WHERE title LIKE :search OR comment LIKE :search ORDER BY date LIMIT :limit",
-			sql.Named("search", "%"+search+"%"),
+
+		rows, err = s.db.Query(
+			"SELECT * FROM scheduler ORDER BY date LIMIT :limit",
 			sql.Named("limit", config.Limit50))
 		if err != nil {
-			return &models.TasksResponse{}, err
+			return make([]*models.Task, 0), err
 		}
 		defer rows.Close()
+
 	}
 
 	for rows.Next() {
@@ -109,46 +127,20 @@ func (s *SchedulerStore) SearchTasks(search string) (*models.TasksResponse, erro
 
 		err := rows.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
 		if err != nil {
-			return &models.TasksResponse{}, err
+			return make([]*models.Task, 0), err
 		}
 
-		tasks.Tasks = append(tasks.Tasks, task)
+		tasks = append(tasks, &task)
+
 	}
 
-	if len(tasks.Tasks) == 0 {
-		tasks.Tasks = []models.Task{}
-		return &tasks, nil
+	if err = rows.Close(); err != nil {
+		return make([]*models.Task, 0), err
 	}
 
-	return &tasks, nil
-}
-
-func (s *SchedulerStore) GetTasks() (*models.TasksResponse, error) {
-
-	var tasks models.TasksResponse
-
-	rows, err := s.DB.Query(
-		"SELECT * FROM scheduler ORDER BY date LIMIT :limit", sql.Named("limit", config.Limit50))
-	if err != nil {
-		return &models.TasksResponse{}, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		task := models.Task{}
-
-		err := rows.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
-		if err != nil {
-			return &models.TasksResponse{}, err
-		}
-
-		tasks.Tasks = append(tasks.Tasks, task)
+	if len(tasks) == 0 {
+		return make([]*models.Task, 0), nil
 	}
 
-	if len(tasks.Tasks) == 0 {
-		tasks.Tasks = []models.Task{}
-		return &tasks, nil
-	}
-
-	return &tasks, nil
+	return tasks, nil
 }
