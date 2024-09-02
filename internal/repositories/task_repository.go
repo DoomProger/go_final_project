@@ -68,7 +68,7 @@ func (s *SchedulerStore) GetTask(id string) (*models.Task, error) {
 	var task models.Task
 
 	row := s.db.QueryRow(
-		"SELECT * FROM scheduler WHERE id = :id", sql.Named("id", id))
+		"SELECT id,date,title,comment,repeat FROM scheduler WHERE id = :id", sql.Named("id", id))
 
 	err := row.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
 	if err != nil {
@@ -91,7 +91,7 @@ func (s *SchedulerStore) SearchTasks(search string) ([]*models.Task, error) {
 		if err == nil {
 
 			rows, err = s.db.Query(
-				"SELECT * FROM scheduler WHERE date = :date",
+				"SELECT id,date,title,comment,repeat FROM scheduler WHERE date = :date",
 				sql.Named("date", parsedDate.Format(config.DateFormat)))
 			if err != nil {
 				return make([]*models.Task, 0), err
@@ -101,7 +101,7 @@ func (s *SchedulerStore) SearchTasks(search string) ([]*models.Task, error) {
 		} else {
 
 			rows, err = s.db.Query(
-				"SELECT * FROM scheduler WHERE title LIKE :search OR comment LIKE :search ORDER BY date LIMIT :limit",
+				"SELECT id,date,title,comment,repeat FROM scheduler WHERE title LIKE :search OR comment LIKE :search ORDER BY date LIMIT :limit",
 				sql.Named("search", "%"+search+"%"),
 				sql.Named("limit", config.Limit50))
 			if err != nil {
@@ -113,7 +113,7 @@ func (s *SchedulerStore) SearchTasks(search string) ([]*models.Task, error) {
 	} else {
 
 		rows, err = s.db.Query(
-			"SELECT * FROM scheduler ORDER BY date LIMIT :limit",
+			"SELECT id,date,title,comment,repeat FROM scheduler ORDER BY date LIMIT :limit",
 			sql.Named("limit", config.Limit50))
 		if err != nil {
 			return make([]*models.Task, 0), err
