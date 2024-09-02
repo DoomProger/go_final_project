@@ -2,10 +2,11 @@ package services
 
 import (
 	"gofinalproject/config"
-	"gofinalproject/internal/nextdate"
-	"gofinalproject/internal/repositories"
 	"gofinalproject/pkg/models"
 	"time"
+
+	"gofinalproject/internal/nextdate"
+	"gofinalproject/internal/repositories"
 )
 
 type TaskService struct {
